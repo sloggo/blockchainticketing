@@ -1,23 +1,21 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
-    const [wallet, setWallet] = useState(() => {
-        const savedWallet = localStorage.getItem('wallet');
-        return savedWallet ? JSON.parse(savedWallet) : null;
+    const [wallet, setWallet] = useState({
+        keystore: null,
+        address: null,
+        isLoggedIn: false
     });
 
-    useEffect(() => {
-        if (wallet) {
-            localStorage.setItem('wallet', JSON.stringify(wallet));
-        } else {
-            localStorage.removeItem('wallet');
-        }
-    }, [wallet]);
+    const value = {
+        wallet,
+        setWallet
+    };
 
     return (
-        <WalletContext.Provider value={{ wallet, setWallet }}>
+        <WalletContext.Provider value={value}>
             {children}
         </WalletContext.Provider>
     );
@@ -25,7 +23,7 @@ export function WalletProvider({ children }) {
 
 export function useWallet() {
     const context = useContext(WalletContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useWallet must be used within a WalletProvider');
     }
     return context;
