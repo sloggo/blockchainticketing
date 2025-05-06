@@ -265,6 +265,7 @@ function BuyToken(props) {
     const { wallet, setWallet } = useWallet();
     const [amount, setAmount] = useState(0);
     const [balance, setBalance] = useState(0);
+    const [contractBalance, setContractBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const web3 = props.web3;
     const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
@@ -280,7 +281,7 @@ function BuyToken(props) {
     }, [setWallet]);
 
     useEffect(() => {
-        const fetchBalance = async () => {
+        const fetchBalances = async () => {
             if (wallet?.address) {
                 try {
                     const isConnected = await web3.eth.net.isListening();
@@ -290,16 +291,24 @@ function BuyToken(props) {
 
                     const balance = await web3.eth.getBalance(formatAddress(wallet.address));
                     setBalance(web3.utils.fromWei(balance, 'ether'));
+
+                    const contractTokenBalance = await contract.methods.balanceOf(formatAddress(contractAddress)).call();
+                    setContractBalance(web3.utils.fromWei(contractTokenBalance, 'ether'));
                 } catch (error) {
-                    console.error("Error fetching balance:", error);
+                    console.error("Error fetching balances:", error);
                     alert("Error connecting to the network. Please check your connection and try again.");
                 }
             }
         };
-        fetchBalance();
+        fetchBalances();
     }, [wallet?.address]);
 
     const buyToken = async () => {
+        if (parseFloat(contractBalance) === 0) {
+            alert("No tokens available in the contract");
+            return;
+        }
+
         if (!wallet || !wallet.keystore) {
             alert("Please login with your wallet first");
             return;
@@ -391,21 +400,16 @@ function BuyToken(props) {
             console.log("Signed transaction:", signedTx);
 
             console.log("Sending transaction...");
-            return new Promise((resolve, reject) => {
-                web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-                    .on('transactionHash', (hash) => {
-                        console.log("Transaction hash:", hash);
-                    })
-                    .on('receipt', (receipt) => {
-                        console.log("Transaction receipt:", receipt);
-                        alert("Transaction successful! Transaction hash: " + receipt.transactionHash);
-                        resolve(receipt);
-                    })
-                    .on('error', (error) => {
-                        console.error("Transaction error:", error);
-                        reject(error);
-                    });
-            });
+            const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+            console.log("Transaction receipt:", receipt);
+            alert("Transaction successful! Transaction hash: " + receipt.transactionHash);
+
+            const newBalance = await web3.eth.getBalance(formatAddress(wallet.address));
+            setBalance(web3.utils.fromWei(newBalance, 'ether'));
+
+            const newContractBalance = await contract.methods.balanceOf(formatAddress(contractAddress)).call();
+            setContractBalance(web3.utils.fromWei(newContractBalance, 'ether'));
+
         } catch (error) {
             console.error("Transaction failed:", error);
             console.error("Error details:", {
@@ -442,6 +446,7 @@ function BuyToken(props) {
         <div>
             <h1>Buy Token</h1>
             <div>
+                <p>Contract Sloggos Balance: {contractBalance} SLOGGOS</p>
                 <p>Current Balance: {balance} ETH</p>
                 <p>Token Price: {TOKEN_PRICE} ETH per token</p>
                 <input 
@@ -451,12 +456,24 @@ function BuyToken(props) {
                     placeholder="Enter number of tokens"
                     min="1"
                     step="1"
-                    disabled={isLoading}
+                    disabled={isLoading || parseFloat(contractBalance) === 0}
                 />
                 <p>Total Cost: {amount * TOKEN_PRICE} ETH</p>
-                <button onClick={buyToken} disabled={isLoading}>
-                    {isLoading ? 'Processing...' : 'Buy Tokens'}
+                <button 
+                    onClick={buyToken}
+                    disabled={isLoading || parseFloat(contractBalance) === 0}
+                    style={{ 
+                        opacity: (isLoading || parseFloat(contractBalance) === 0) ? 0.5 : 1,
+                        cursor: (isLoading || parseFloat(contractBalance) === 0) ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    {isLoading ? 'Processing...' : parseFloat(contractBalance) === 0 ? 'No Tokens Available' : 'Buy Tokens'}
                 </button>
+                {parseFloat(contractBalance) === 0 && (
+                    <p style={{ color: 'red', marginTop: '10px' }}>
+                        No tokens available in the contract. Please try again later.
+                    </p>
+                )}
             </div>
         </div>
     );

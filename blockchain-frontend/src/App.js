@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from "./pages/Home";
 import CreateWallet from "./pages/wallet/CreateWallet";
 import WalletBalance from "./pages/wallet/WalletBalance";
@@ -10,11 +11,11 @@ import BuyToken from "./pages/token/BuyToken";
 import TransferToken from "./pages/token/TransferToken";
 
 function App() {
-  const web3 = new Web3("https://holesky.drpc.org");
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://holesky.drpc.org'));
 
   return (
     <WalletProvider>
-      <BrowserRouter>
+      <Router>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/wallet" element={<Wallet />}>
@@ -26,7 +27,7 @@ function App() {
             <Route path="transfer" element={<TransferToken web3={web3} />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </Router>
     </WalletProvider>
   );
 }

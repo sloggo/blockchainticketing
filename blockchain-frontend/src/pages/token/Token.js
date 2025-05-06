@@ -1,14 +1,40 @@
 import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 
 function Token() {
     return (
         <div>
-            <h1>Token</h1>
+            <h1>Token Operations</h1>
             <nav>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', gap: '20px' }}>
-                    <li><Link to="/token/buy">Buy Token</Link></li>
-                    <li><Link to="/token/transfer">Transfer Token</Link></li>
+                <ul style={{ 
+                    listStyle: 'none', 
+                    padding: 0, 
+                    display: 'flex', 
+                    gap: '20px',
+                    marginBottom: '20px'
+                }}>
+                    <li>
+                        <Link to="/token/buy" style={{
+                            textDecoration: 'none',
+                            color: '#007bff',
+                            padding: '10px 20px',
+                            borderRadius: '5px',
+                            border: '1px solid #007bff'
+                        }}>
+                            Buy Tokens
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/token/transfer" style={{
+                            textDecoration: 'none',
+                            color: '#007bff',
+                            padding: '10px 20px',
+                            borderRadius: '5px',
+                            border: '1px solid #007bff'
+                        }}>
+                            Sell Tokens
+                        </Link>
+                    </li>
                 </ul>
             </nav>
             <Outlet />
