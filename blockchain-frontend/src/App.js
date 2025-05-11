@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from "./pages/Home";
 import CreateWallet from "./pages/wallet/CreateWallet";
 import WalletBalance from "./pages/wallet/WalletBalance";
@@ -14,21 +14,48 @@ function App() {
   const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://holesky.drpc.org'));
 
   return (
-    <WalletProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/wallet" element={<Wallet />}>
-            <Route path="create" element={<CreateWallet web3={web3} />} />
-            <Route path="balance" element={<WalletBalance web3={web3} />} />
-          </Route>
-          <Route path="/token" element={<Token />}>
-            <Route path="buy" element={<BuyToken web3={web3} />} />
-            <Route path="transfer" element={<TransferToken web3={web3} />} />
-          </Route>
-        </Routes>
-      </Router>
-    </WalletProvider>
+    <Router>
+      <WalletProvider>
+        <div>
+          <nav style={{ 
+            display: 'flex', 
+            gap: '20px', 
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <Link to="/" style={{
+              textDecoration: 'none',
+              borderRadius: '5px',
+            }}>
+              Home
+            </Link>
+            <Link to="/wallet" style={{
+              textDecoration: 'none',
+              borderRadius: '5px',
+            }}>
+              Wallet
+            </Link>
+            <Link to="/token" style={{
+              textDecoration: 'none',
+              borderRadius: '5px',
+            }}>
+              Tokens
+            </Link>
+          </nav>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/wallet" element={<Wallet />}>
+              <Route path="create" element={<CreateWallet web3={web3} />} />
+              <Route path="balance" element={<WalletBalance web3={web3} />} />
+            </Route>
+            <Route path="/token" element={<Token />}>
+              <Route path="buy" element={<BuyToken web3={web3} />} />
+              <Route path="transfer" element={<TransferToken web3={web3} />} />
+            </Route>
+          </Routes>
+        </div>
+      </WalletProvider>
+    </Router>
   );
 }
 
