@@ -267,6 +267,7 @@ function BuyToken(props) {
     const [balance, setBalance] = useState(0);
     const [contractBalance, setContractBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
     const web3 = props.web3;
     const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
     const TOKEN_PRICE = 0.00001;
@@ -284,6 +285,7 @@ function BuyToken(props) {
         const fetchBalances = async () => {
             if (wallet?.address) {
                 try {
+                    setIsInitialLoading(true);
                     const isConnected = await web3.eth.net.isListening();
                     if (!isConnected) {
                         throw new Error("Not connected to the network");
@@ -297,6 +299,8 @@ function BuyToken(props) {
                 } catch (error) {
                     console.error("Error fetching balances:", error);
                     alert("Error connecting to the network. Please check your connection and try again.");
+                } finally {
+                    setIsInitialLoading(false);
                 }
             }
         };
@@ -443,36 +447,51 @@ function BuyToken(props) {
     }
 
     return (
-        <div>
-            <h1>Buy Token</h1>
-            <div>
-                <p>Contract Sloggos Balance: {contractBalance} SLOGGOS</p>
-                <p>Current Balance: {balance} ETH</p>
-                <p>Token Price: {TOKEN_PRICE} ETH per token</p>
-                <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={(e) => setAmount(e.target.value)} 
-                    placeholder="Enter number of tokens"
-                    min="1"
-                    step="1"
-                    disabled={isLoading || parseFloat(contractBalance) === 0}
-                />
-                <p>Total Cost: {amount * TOKEN_PRICE} ETH</p>
-                <button 
-                    onClick={buyToken}
-                    disabled={isLoading || parseFloat(contractBalance) === 0}
-                    style={{ 
-                        opacity: (isLoading || parseFloat(contractBalance) === 0) ? 0.5 : 1,
-                        cursor: (isLoading || parseFloat(contractBalance) === 0) ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                    {isLoading ? 'Processing...' : parseFloat(contractBalance) === 0 ? 'No Tokens Available' : 'Buy Tokens'}
-                </button>
-                {parseFloat(contractBalance) === 0 && (
-                    <p style={{ color: 'red', marginTop: '10px' }}>
-                        No tokens available in the contract. Please try again later.
-                    </p>
+        <div className="max-w-2xl mx-auto">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Buy Token</h1>
+            <div className="bg-white shadow rounded-lg p-6">
+                {isInitialLoading ? (
+                    <div className="space-y-4">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 rounded-full animate-loading-bar"></div>
+                        </div>
+                        <p className="text-center text-gray-600">Loading token information...</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <p className="text-gray-600">Contract Sloggos Balance: <span className="font-medium">{contractBalance} SLOGGOS</span></p>
+                        <p className="text-gray-600">Current Balance: <span className="font-medium">{balance} ETH</span></p>
+                        <p className="text-gray-600">Token Price: <span className="font-medium">{TOKEN_PRICE} ETH per token</span></p>
+                        
+                        <div className="mt-4">
+                            <input 
+                                type="number" 
+                                value={amount} 
+                                onChange={(e) => setAmount(e.target.value)} 
+                                placeholder="Enter number of tokens"
+                                min="1"
+                                step="1"
+                                disabled={isLoading || parseFloat(contractBalance) === 0}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            />
+                        </div>
+
+                        <p className="text-gray-600">Total Cost: <span className="font-medium">{amount * TOKEN_PRICE} ETH</span></p>
+                        
+                        <button 
+                            onClick={buyToken}
+                            disabled={isLoading || parseFloat(contractBalance) === 0}
+                            className="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {isLoading ? 'Processing...' : parseFloat(contractBalance) === 0 ? 'No Tokens Available' : 'Buy Tokens'}
+                        </button>
+
+                        {parseFloat(contractBalance) === 0 && (
+                            <p className="mt-4 text-red-600 text-sm">
+                                No tokens available in the contract. Please try again later.
+                            </p>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

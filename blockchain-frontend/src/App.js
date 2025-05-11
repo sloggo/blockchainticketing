@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from "./pages/Home";
 import CreateWallet from "./pages/wallet/CreateWallet";
@@ -12,6 +12,7 @@ import TransferToken from "./pages/token/TransferToken";
 
 function App() {
   const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://holesky.drpc.org'));
+  const [userRole, setUserRole] = useState('customer');
 
   return (
     <Router>
@@ -21,26 +22,20 @@ function App() {
             display: 'flex', 
             gap: '20px', 
             padding: '20px',
-            marginBottom: '20px'
+            marginBottom: '20px',
+            alignItems: 'center'
           }}>
-            <Link to="/" style={{
-              textDecoration: 'none',
-              borderRadius: '5px',
-            }}>
-              Home
-            </Link>
-            <Link to="/wallet" style={{
-              textDecoration: 'none',
-              borderRadius: '5px',
-            }}>
-              Wallet
-            </Link>
-            <Link to="/token" style={{
-              textDecoration: 'none',
-              borderRadius: '5px',
-            }}>
-              Tokens
-            </Link>
+            <div style={{ display: 'flex', gap: '20px', flex: 1 }}>
+              <Link to="/" style={{ textDecoration: 'none', borderRadius: '5px' }}>
+                Home
+              </Link>
+              <Link to="/wallet" style={{ textDecoration: 'none', borderRadius: '5px' }}>
+                Wallet
+              </Link>
+              <Link to="/token" style={{ textDecoration: 'none', borderRadius: '5px' }}>
+                Tokens
+              </Link>
+            </div>
           </nav>
           <Routes>
             <Route path="/" element={<Home />} />

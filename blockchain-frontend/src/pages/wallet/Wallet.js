@@ -10,7 +10,6 @@ function Wallet() {
     const [privateKey, setPrivateKey] = useState('');
 
     useEffect(() => {
-        // Load wallet from localStorage on component mount
         const savedWallet = localStorage.getItem('wallet');
         if (savedWallet) {
             setWallet(JSON.parse(savedWallet));
@@ -49,10 +48,8 @@ function Wallet() {
         try {
             const web3 = new Web3();
             
-            // Remove '0x' prefix if present
             const cleanPrivateKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
             
-            // Validate private key
             const account = web3.eth.accounts.privateKeyToAccount('0x' + cleanPrivateKey);
             if (!account) {
                 throw new Error('Invalid private key');
@@ -88,58 +85,161 @@ function Wallet() {
         localStorage.removeItem('wallet');
     };
 
+    const downloadKeystore = () => {
+        if (!wallet?.keystore) {
+            setError('No keystore file available');
+            return;
+        }
+
+        try {
+            const element = document.createElement('a');
+            const file = new Blob([JSON.stringify(wallet.keystore, null, 2)], { type: 'application/json' });
+            element.href = URL.createObjectURL(file);
+            element.download = `keystore_${wallet.address.slice(2, 8)}.json`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        } catch (err) {
+            console.error('Error downloading keystore:', err);
+            setError('Failed to download keystore file');
+        }
+    };
+
     return (
-        <div>
-            <h1>Wallet</h1>
-            <div>
-                {!wallet.isLoggedIn ? (
-                    <div>
-                        <h3>Upload Keystore File</h3>
-                        <input 
-                            type="file" 
-                            accept=".json" 
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                            id="keystore-upload"
-                        />
-                        <label htmlFor="keystore-upload" style={{ cursor: 'pointer' }}>
-                            Choose File
-                        </label>
-                        
-                        <h3>Or Enter Keys</h3>
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="Public Key (0x...)"
-                                value={publicKey}
-                                onChange={(e) => setPublicKey(e.target.value)}
-                                style={{ marginBottom: '10px', width: '100%' }}
-                            />
-                            <input
-                                type="password"
-                                placeholder="Private Key (0x... or without 0x)"
-                                value={privateKey}
-                                onChange={(e) => setPrivateKey(e.target.value)}
-                                style={{ marginBottom: '10px', width: '100%' }}
-                            />
-                            <button onClick={handleKeyLogin}>Login with Keys</button>
+        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">Wallet Management</h1>
+                
+                <div className="bg-white shadow rounded-lg p-6 mb-8">
+                    {!wallet.isLoggedIn ? (
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Keystore File</h3>
+                                <div className="flex items-center space-x-4">
+                                    <input 
+                                        type="file" 
+                                        accept=".json" 
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                        id="keystore-upload"
+                                    />
+                                    <label 
+                                        htmlFor="keystore-upload" 
+                                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                                    >
+                                        Choose File
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 pt-6">
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">Or Enter Keys</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="public-key" className="block text-sm font-medium text-gray-700">
+                                            Public Key
+                                        </label>
+                                        <input
+                                            id="public-key"
+                                            type="text"
+                                            placeholder="0x..."
+                                            value={publicKey}
+                                            onChange={(e) => setPublicKey(e.target.value)}
+                                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="private-key" className="block text-sm font-medium text-gray-700">
+                                            Private Key
+                                        </label>
+                                        <input
+                                            id="private-key"
+                                            type="password"
+                                            placeholder="0x... or without 0x"
+                                            value={privateKey}
+                                            onChange={(e) => setPrivateKey(e.target.value)}
+                                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={handleKeyLogin}
+                                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        Login with Keys
+                                    </button>
+                                </div>
+                            </div>
+                            {error && (
+                                <p className="mt-4 text-sm text-red-600">
+                                    {error}
+                                </p>
+                            )}
                         </div>
-                        {error && <p style={{ color: 'red' }}>{error}</p>}
-                    </div>
-                ) : (
-                    <div>
-                        <p>Connected Wallet: {wallet.address}</p>
-                        <button onClick={handleLogout}>Logout</button>
-                    </div>
-                )}
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Connected Wallet</p>
+                                    <p className="mt-1 text-lg font-medium text-gray-900">{wallet.address}</p>
+                                </div>
+                                <div className="flex space-x-4">
+                                    <button 
+                                        onClick={downloadKeystore}
+                                        className="px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        Download Keystore
+                                    </button>
+                                    <button 
+                                        onClick={handleLogout}
+                                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                            {error && (
+                                <div className="rounded-md bg-red-50 p-4">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                            <p className="text-sm text-red-700">{error}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <nav className="mb-8">
+                    <ul className="flex space-x-4">
+                        <li>
+                            <Link 
+                                to="/wallet/create"
+                                className="inline-flex items-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                Create Wallet
+                            </Link>
+                        </li>
+                        <li>
+                            <Link 
+                                to="/wallet/balance"
+                                className="inline-flex items-center px-6 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                Check Balance
+                            </Link>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div className="bg-white shadow rounded-lg p-6">
+                    <Outlet />
+                </div>
             </div>
-            <nav>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', gap: '20px' }}>
-                    <li><Link to="/wallet/create">Create Wallet</Link></li>
-                    <li><Link to="/wallet/balance">Check Balance</Link></li>
-                </ul>
-            </nav>
-            <Outlet />
         </div>
     );
 }

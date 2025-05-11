@@ -260,6 +260,8 @@ function TransferToken(props) {
     const [tokenBalance, setTokenBalance] = useState(0);
     const [ethBalance, setEthBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [error, setError] = useState('');
     const web3 = props.web3;
     const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
     const TOKEN_PRICE = 0.00001;
@@ -277,6 +279,7 @@ function TransferToken(props) {
         const fetchBalances = async () => {
             if (wallet?.address) {
                 try {
+                    setIsInitialLoading(true);
                     const balance = await web3.eth.getBalance(formatAddress(wallet.address));
                     setEthBalance(web3.utils.fromWei(balance, 'ether'));
 
@@ -284,6 +287,9 @@ function TransferToken(props) {
                     setTokenBalance(web3.utils.fromWei(tokenBalance, 'ether'));
                 } catch (error) {
                     console.error("Error fetching balances:", error);
+                    setError("Error fetching balances. Please try again.");
+                } finally {
+                    setIsInitialLoading(false);
                 }
             }
         };
@@ -291,18 +297,20 @@ function TransferToken(props) {
     }, [wallet?.address]);
 
     const transferTokens = async () => {
+        setError(''); // Clear any previous errors
+        
         if (!wallet || !wallet.keystore) {
-            alert("Please login with your wallet first");
+            setError("Please login with your wallet first");
             return;
         }
 
         if (!amount || amount <= 0) {
-            alert("Please enter a valid amount");
+            setError("Please enter a valid amount");
             return;
         }
 
         if (parseFloat(tokenBalance) < amount) {
-            alert(`Insufficient token balance. You only have ${tokenBalance} SLOGGOS`);
+            setError(`Insufficient token balance. You only have ${tokenBalance} SLOGGOS`);
             return;
         }
 
@@ -410,43 +418,63 @@ function TransferToken(props) {
                 errorMessage += error.message;
             }
             
-            alert(errorMessage);
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
     }
 
     return (
-        <div>
-            <h1>Sell Tokens</h1>
-            <div>
-                <p>Your Sloggos Balance: {tokenBalance} SLOGGOS</p>
-                <p>Your ETH Balance: {ethBalance} ETH</p>
-                <p>Token Price: {TOKEN_PRICE} ETH per token</p>
-                <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={(e) => setAmount(e.target.value)} 
-                    placeholder="Enter number of tokens to sell"
-                    min="1"
-                    step="1"
-                    disabled={isLoading || parseFloat(tokenBalance) === 0}
-                />
-                <p>You will receive: {amount * TOKEN_PRICE} ETH</p>
-                <button 
-                    onClick={transferTokens}
-                    disabled={isLoading || parseFloat(tokenBalance) === 0}
-                    style={{ 
-                        opacity: (isLoading || parseFloat(tokenBalance) === 0) ? 0.5 : 1,
-                        cursor: (isLoading || parseFloat(tokenBalance) === 0) ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                    {isLoading ? 'Processing...' : 'Sell Tokens'}
-                </button>
-                {parseFloat(tokenBalance) === 0 && (
-                    <p style={{ color: 'red', marginTop: '10px' }}>
-                        You don't have any tokens to sell.
-                    </p>
+        <div className="max-w-2xl mx-auto">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Sell Tokens</h1>
+            <div className="bg-white shadow rounded-lg p-6">
+                {isInitialLoading ? (
+                    <div className="space-y-4">
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 rounded-full animate-loading-bar"></div>
+                        </div>
+                        <p className="text-center text-gray-600">Loading token information...</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <p className="text-gray-600">Your Token Balance: <span className="font-medium">{tokenBalance} SLOGGOS</span></p>
+                        <p className="text-gray-600">ETH Balance: <span className="font-medium">{ethBalance} ETH</span></p>
+                        
+                        <div className="mt-4">
+                            <input 
+                                type="number" 
+                                value={amount} 
+                                onChange={(e) => setAmount(e.target.value)} 
+                                placeholder="Enter number of tokens to sell"
+                                min="1"
+                                step="1"
+                                disabled={isLoading || parseFloat(tokenBalance) === 0}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            />
+                        </div>
+
+                        <p className="text-gray-600">You will receive: <span className="font-medium">{amount * TOKEN_PRICE} ETH</span></p>
+                        
+                        <button 
+                            onClick={transferTokens}
+                            disabled={isLoading || parseFloat(tokenBalance) === 0}
+                            className="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {isLoading ? 'Processing...' : parseFloat(tokenBalance) === 0 ? 'No Tokens Available' : 'Sell Tokens'}
+                        </button>
+
+                        {parseFloat(tokenBalance) === 0 && (
+                            <p className="mt-4 text-red-600 text-sm">
+                                No tokens available in your wallet. Please buy tokens first.
+                            </p>
+                        )}
+
+                        {error && (
+                            <p className="mt-4 text-red-600 text-sm">
+                                {error}
+                            </p>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
