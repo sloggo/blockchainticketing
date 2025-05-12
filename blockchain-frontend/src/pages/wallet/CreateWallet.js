@@ -1,15 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../../context/WalletContext';
 import Web3 from 'web3';
 
-function CreateWallet() {
+function CreateWallet({ web3, onWalletCreated }) {
     const navigate = useNavigate();
     const { wallet, setWallet } = useWallet();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState(0);
+
+    useEffect(() => {
+        // Calculate password strength
+        let strength = 0;
+        if (password.length >= 8) strength += 1;
+        if (password.match(/[A-Z]/)) strength += 1;
+        if (password.match(/[a-z]/)) strength += 1;
+        if (password.match(/[0-9]/)) strength += 1;
+        if (password.match(/[^A-Za-z0-9]/)) strength += 1;
+        setPasswordStrength(strength);
+    }, [password]);
+
+    const getPasswordStrengthColor = () => {
+        switch (passwordStrength) {
+            case 0: return 'bg-red-500';
+            case 1: return 'bg-red-500';
+            case 2: return 'bg-yellow-500';
+            case 3: return 'bg-yellow-500';
+            case 4: return 'bg-green-500';
+            case 5: return 'bg-green-500';
+            default: return 'bg-gray-200';
+        }
+    };
+
+    const getPasswordStrengthText = () => {
+        switch (passwordStrength) {
+            case 0: return 'Very Weak';
+            case 1: return 'Weak';
+            case 2: return 'Fair';
+            case 3: return 'Good';
+            case 4: return 'Strong';
+            case 5: return 'Very Strong';
+            default: return '';
+        }
+    };
 
     const createWallet = async () => {
         setError('');
@@ -26,6 +63,11 @@ function CreateWallet() {
 
         if (password.length < 8) {
             setError('Password must be at least 8 characters long');
+            return;
+        }
+
+        if (passwordStrength < 3) {
+            setError('Please choose a stronger password');
             return;
         }
 
@@ -114,6 +156,25 @@ function CreateWallet() {
                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                             disabled={isLoading}
                         />
+                        {password && (
+                            <div className="mt-2">
+                                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                        className={`h-full ${getPasswordStrengthColor()} transition-all duration-300`}
+                                        style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                                    ></div>
+                                </div>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    Password strength: {getPasswordStrengthText()}
+                                </p>
+                                <ul className="mt-2 text-xs text-gray-500 list-disc list-inside">
+                                    <li>At least 8 characters long</li>
+                                    <li>Include uppercase and lowercase letters</li>
+                                    <li>Include numbers</li>
+                                    <li>Include special characters</li>
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -163,7 +224,7 @@ function CreateWallet() {
 
                     <button
                         onClick={createWallet}
-                        disabled={isLoading}
+                        disabled={isLoading || passwordStrength < 3}
                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         {isLoading ? 'Creating Wallet...' : 'Create Wallet'}
@@ -173,5 +234,15 @@ function CreateWallet() {
         </div>
     );
 }
+
+CreateWallet.propTypes = {
+    web3: PropTypes.object,
+    onWalletCreated: PropTypes.func
+};
+
+CreateWallet.defaultProps = {
+    web3: null,
+    onWalletCreated: () => {}
+};
 
 export default CreateWallet;
