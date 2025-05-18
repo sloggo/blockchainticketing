@@ -14,7 +14,6 @@ function CreateWallet({ web3, onWalletCreated }) {
     const [passwordStrength, setPasswordStrength] = useState(0);
 
     useEffect(() => {
-        // Calculate password strength
         let strength = 0;
         if (password.length >= 8) strength += 1;
         if (password.match(/[A-Z]/)) strength += 1;
@@ -99,7 +98,6 @@ function CreateWallet({ web3, onWalletCreated }) {
             setWallet(walletData);
             localStorage.setItem('wallet', JSON.stringify(walletData));
 
-            // Create and download the keystore file
             const element = document.createElement('a');
             const file = new Blob([JSON.stringify(keystore, null, 2)], { type: 'application/json' });
             element.href = URL.createObjectURL(file);
@@ -108,7 +106,6 @@ function CreateWallet({ web3, onWalletCreated }) {
             element.click();
             document.body.removeChild(element);
 
-            // Show success message and navigate
             alert('Wallet created successfully! Your keystore file has been downloaded. Keep it secure and never share it with anyone.');
             navigate('/wallet/balance');
         } catch (err) {

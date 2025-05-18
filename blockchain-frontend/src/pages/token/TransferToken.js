@@ -337,7 +337,6 @@ function TransferToken(props) {
                 throw new Error("Failed to decrypt wallet");
             }
 
-            // First approve the contract to spend tokens
             console.log("Approving tokens...");
             const approveTx = contract.methods.approve(
                 formatAddress(contractAddress),
@@ -361,7 +360,6 @@ function TransferToken(props) {
             console.log("Sending approval transaction...");
             await web3.eth.sendSignedTransaction(signedApproveTx.rawTransaction);
 
-            // Now transfer tokens to the contract
             console.log("Transferring tokens...");
             const transferTx = contract.methods.transfer(
                 formatAddress(contractAddress),
@@ -387,7 +385,6 @@ function TransferToken(props) {
             console.log("Transaction receipt:", receipt);
             alert("Tokens transferred successfully! Transaction hash: " + receipt.transactionHash);
 
-            // Refresh balances
             const newBalance = await web3.eth.getBalance(formatAddress(wallet.address));
             setEthBalance(web3.utils.fromWei(newBalance, 'ether'));
 
